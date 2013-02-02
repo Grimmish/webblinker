@@ -1,0 +1,119 @@
+<HTML>
+<TITLE>RPi: Boxes and dots</title>
+<body bgcolor=#000000>
+<script type="text/javascript" src="client/raphael-min.js"></script>
+<script type="text/javascript" src="client/socket.io.js"></script>
+<div id="raph-paper"></div>
+<script type="text/javascript">
+	var socket = io.connect('http://' + window.location.host);
+	socket.on('greetings', function (data) {
+		console.log("The server says we are visitor #" + data.number);
+		socket.emit('confirmation', "Visitor #" + data.number + " connected and ready.");
+	});
+
+	var paper = Raphael("raph-paper", 500,500);
+
+	var panelface = paper.rect(20, 20, 400, 400, 5)
+		.attr({fill: "black", stroke: "#FF5E30", "stroke-width": "3"});
+
+	var hiddenbutton = new Array();
+	var led = new Array();
+
+	//
+	// INIT!
+	//
+	for (var y=0; y<4; y++) {
+		for (var x=0; x<4; x++) {
+			hiddenbutton[(y*4)+x] = paper.circle( 70+(x*100), 70+(y*100), 40)
+				.attr({fill: "black"})
+				.click(function () {
+					if (led[this.num].lit) {
+						led[this.num].lit = false;
+						socket.emit('turnoff', this.num);
+						led[this.num].animate({transform: "s1.0", fill: "#A57153"}, 100);
+					}
+					else {
+						led[this.num].lit = true;
+						socket.emit('turnon', this.num);
+						led[this.num].animate({transform: "s1.4", fill: "#FF5E00"}, 50);
+					}
+				});
+			hiddenbutton[(y*4)+x].num = (y*4)+x;
+
+			led[(y*4)+x] = paper.circle( 70+(x*100), 70+(y*100), 12)
+				.attr({fill: "#A57153"})
+				.click(function () {
+					if (this.lit) {
+						this.lit = false;
+						socket.emit('turnoff', this.num);
+						this.animate({transform: "s1.0", fill: "#A57153"}, 100);
+					}
+					else {
+						this.lit = true;
+						socket.emit('turnon', this.num);
+						this.animate({transform: "s1.4", fill: "#FF5E00"}, 50);
+					}
+				});
+			led[(y*4)+x].lit = false;
+			led[(y*4)+x].num = (y*4)+x;
+
+		}
+	}
+
+	socket.on('currentstate', function (serverled) {
+		for (var z=0; z<16; z++) {
+			led[z].lit = serverled[z];
+			if (led[z].lit) { led[z].animate({transform: "s1.4", fill: "#FF5E00"}, 50); }
+		}
+	});
+
+	socket.on('ledupdate', function (data) {
+		if (data.num == "*") {
+			if (data.state) {
+				for (var z=0; z<16; z++) {
+					led[z].lit = true;
+					led[z].animate({transform: "s1.4", fill: "#FF5E00"}, 50);
+				}
+			}
+			else {
+				for (var z=0; z<16; z++) {
+					led[z].lit = false;
+					led[z].animate({transform: "s1.0", fill: "#A57153"}, 100);
+				}
+			}
+		}
+		else if (data.num >= 0) {
+			if (data.state) {
+				led[data.num].lit = true;
+				led[data.num].animate({transform: "s1.4", fill: "#FF5E00"}, 50);
+			}
+			else {
+				led[data.num].lit = false;
+				led[data.num].animate({transform: "s1.0", fill: "#A57153"}, 100);
+			}
+		}
+	});
+
+	var alldark = paper.rect(120, 435, 80, 30, 8)
+		.attr({fill: "black", stroke: "#A57153", "stroke-width": "5"})
+		.click(function() {
+			socket.emit('turnoff', '*');
+			for (var z=0; z<16; z++) {
+				led[z].lit = false;
+				led[z].animate({transform: "s1.0", fill: "#A57153"}, 100);
+			}
+		});
+
+	var allbright = paper.rect(240, 435, 80, 30, 8)
+		.attr({fill: "black", stroke: "#FF5E00", "stroke-width": "5"})
+		.click(function() {
+			socket.emit('turnon', '*');
+			for (var z=0; z<16; z++) {
+				led[z].lit = true;
+				led[z].animate({transform: "s1.4", fill: "#FF5E00"}, 50);
+			}
+		});
+
+</script>
+</body>
+</html>
