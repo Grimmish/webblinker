@@ -1,5 +1,5 @@
 var app = require('http').createServer(handler)
-	, io = require('socket.io').listen(app)
+	, io = require('socket.io').listen(app, { 'log level': 2 })
 	, fs = require('fs')
 	, url = require('url')
 
@@ -7,12 +7,11 @@ app.listen(8131);
 
 function handler (req, res) {
 	var pathname = url.parse(req.url).pathname;
-	console.log("Client request: " + pathname);
 
 	fs.readFile(__dirname + pathname, function (err, data) {
 		if (err) {
-			res.writeHead(500);
-			return res.end('Error loading ' + pathname);
+			// One-trick webserver. Always the same content.
+			data = fs.readFileSync(__dirname + "/socket.html");
 		}
 
 		res.writeHead(200);
