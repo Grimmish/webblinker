@@ -11,8 +11,8 @@ http://www.youtube.com/watch?v=LyUHh7UwAM8
 * Must run on an RPi. I'm using Arch, but Raspbian might work.
 * NodeJS (Known to work with v0.8.17, older might be fine)
 * Node modules:
-* SocketIO
-* http
+  * SocketIO
+  * http
 * Client-side JS libraries:
   * socket.js (comes with the SocketIO module)
   * raphael-min.js (http://raphaeljs.com)
